@@ -7,7 +7,6 @@ require 'logger'
 #TODO - allow you to configure what gets excluded from uploading
 #TODO - add support for pulling down a plunk to keep the local file in sync
 #TODO - build as a gem
-#TODO - add support for storing the key for the plunk in the directory so if you re-plunk_it it will override the plunk instead of creating a new one
 
 VALID_EXTENSTIONS = [".js", ".html"]
 if !File.exists?(File.expand_path("~/.plunk_it"))
@@ -25,14 +24,20 @@ puts "Preparing to plunk #{target_directory}"
 # the description
 # the tags for the item
 # get the authentication from a file or env?
-payload = YAML.load_file('manifest.yml')
-payload["files"] = {} if !payload["files"]
-payload["description"] +=  " #{Time.now}"
-
-#get a list of the files in the directory - exclude the manifest
 abort "#{target_directory} is not a valid directory"  if !FileTest.directory?(target_directory)
 abort("You do not have permission to read #{target_directory}") if !FileTest.readable?(target_directory)
 Dir.chdir(target_directory)
+manifest_filename = File.expand_path([target_directory, "manifest.yml"].join(File::SEPARATOR))
+abort("You must have a manifest.yml file in directory it to be able to be plunked") if !File.exists?(manifest_filename)
+puts "Unable to save the plunker id because the manifest is not writable" if !FileTest.writable?(manifest_filename)
+manifest = YAML.load_file(manifest_filename)
+
+payload = manifest.clone
+payload.delete("plnkr_id")
+payload["files"] = {} if !payload["files"]
+#payload["description"] +=  " #{Time.now}"
+
+#get a list of the files in the directory - exclude the manifest
 puts "Bundling files:"
 Dir["**/*"].select{|x| !File.directory?(x) && 
                        VALID_EXTENSTIONS.include?(File.extname(x))}.each do |file_name|
@@ -42,8 +47,6 @@ Dir["**/*"].select{|x| !File.directory?(x) &&
                         :content => file.read}
 
 end
-
-
 @agent = Mechanize.new do|a|
 #a.log = Logger.new('log.txt')
 #   a.log.level = Logger::DEBUG
@@ -58,17 +61,80 @@ login_post = @agent.post(plnkr_session["user_url"], MultiJson.dump({"service" =>
                      "Referer" => "http://www.plnkr.co/"})
 
 #figure out if they have plunked it before
-post_url = "http://api.plnkr.co/plunks?sessid=#{plnkr_session["id"]}"
+if manifest["plnkr_id"]
+  post_url = "http://api.plnkr.co/plunks/#{manifest["plnkr_id"]}?sessid=#{plnkr_session["id"]}"
+#payload.delete("tags") #Tags have to be handled in a seperate request
+  referer = "http://plnkr.co/edit/#{manifest["plnkr_id"]}"
+  current_data_page = @agent.get(post_url)
+  current_data = MultiJson.load(current_data_page.body)
+  payload.delete("description") if current_data["description"] == payload["description"]
+  payload.delete("private") if current_data["private"] == payload["private"]
+  payload.delete("tags")
+  new_tags = {}
+  manifest["tags"].each do |tag|
+    if !current_data["tags"].include?(tag)
+      new_tags[tag] = true
+    end
+  end
+  current_data["tags"].each do |tag|
+    if !manifest["tags"].include?(tag)
+      new_tags[tag] = nil
+    end
+  end
+  payload["tags"] = new_tags if !new_tags.empty?
 
-plunk_post = @agent.get(post_url)
+  new_files = {}
+  payload["files"].each do |file, value|
+    if !current_data["files"].has_key?(file)
+      puts "New file found #{file}"
+      new_files[file] = value
+    else
+      if current_data["files"][file]["content"] != value[:content]
+        puts "File modified #{file}"
+#       puts "Server:"
+#       pp current_data["files"][file]["content"]
+#       puts "Local:"
+#       pp value[:content]
+        new_files[file] = { "content" => value[:content]}
+      else
+        puts "Ignoring #{file}"
+      end
+    end
+
+  end
+  current_data["files"].each do |file,value|
+    if !payload["files"].has_key?(file)
+      puts "Removing File #{file}"
+      new_files[file] = nil
+    end
+  end
+
+  # figure out i fthere are files that have chnaged
+  if new_files.empty?
+    payload.delete("files")
+  else
+    payload["files"] = new_files
+  end
+
+#pp payload
+# pp MultiJson.dump(payload)
+#  abort("oops")
+else
+  post_url = "http://api.plnkr.co/plunks?sessid=#{plnkr_session["id"]}"
+  referer = "http://plnkr.co/edit/"
+  current_data_page = @agent.get(post_url)
+end
+
 plunk_post = @agent.post(post_url, MultiJson.dump(payload),
                     {"Content-type" => "application/json;charset=UTF-8",
                       "Host" => "api.plnkr.co",
                       "Origin" => "http://plnkr.co",
-                      "Referer" => "http://plnkr.co/edit/"})
+                      "Referer" => referer })
 
                          
 plunk_data =  MultiJson.load(plunk_post.body)
+manifest["plnkr_id"]  = plunk_data["id"]
+File.open(manifest_filename, "wb") do |f|
+  f.write(YAML.dump(manifest))
+end
 puts "It has been plunked to http://plnkr.co/edit/#{plunk_data["id"]}"
-
-#Now write out a .plunk_it into the directory to track the id
