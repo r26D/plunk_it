@@ -7,16 +7,17 @@ require 'logger'
 #TODO - allow you to configure what gets excluded from uploading
 #TODO - add support for pulling down a plunk to keep the local file in sync
 #TODO - build as a gem
-#TODO - add support for working on other directories
 
 VALID_EXTENSTIONS = [".js", ".html"]
 if !File.exists?(File.expand_path("~/.plunk_it"))
-  puts "You must created a ~/.plunk_it with your GitHubToken"
-  exit
+  abort("You must created a ~/.plunk_it with your GitHubToken")
 else
   GITHUB_TOKEN = File.open(File.expand_path("~/.plunk_it"), "rb").read
 end
 
+target_directory = ARGV.first
+abort("You must provide the name of a directory to plunk") if !target_directory
+puts "Preparing to plunk #{target_directory}"
 
 #open the manifest - which should have 
 # the url
@@ -28,13 +29,19 @@ payload["files"] = {} if !payload["files"]
 payload["description"] +=  " #{Time.now}"
 
 #get a list of the files in the directory - exclude the manifest
+abort "#{target_directory} is not a valid directory"  if !FileTest.directory?(target_directory)
+abort("You do not have permission to read #{target_directory}") if !FileTest.readable?(target_directory)
+Dir.chdir(target_directory)
+puts "Bundling files:"
 Dir["**/*"].select{|x| !File.directory?(x) && 
                        VALID_EXTENSTIONS.include?(File.extname(x))}.each do |file_name|
+  puts "\t#{file_name}" 
   file = File.open(file_name, "rb")
   payload["files"][file_name] = { :filename => file_name,
                         :content => file.read}
 
 end
+exit
 @agent = Mechanize.new do|a|
 #a.log = Logger.new('log.txt')
 #   a.log.level = Logger::DEBUG
