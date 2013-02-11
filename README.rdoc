@@ -24,6 +24,6 @@ After that you should be able to run the command on any directory you want
 
 == Copyright
 
-Copyright (c) 2013 Dirk Elmendorf. See LICENSE.txt for
+Copyright (c) 2013 Dirk Elmendorf & r26D LLC. See LICENSE.txt for
 further details.
 
