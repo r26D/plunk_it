@@ -10,8 +10,8 @@ Gem::Specification.new do |s|
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Dirk Elmendorf"]
   s.date = "2013-02-11"
-  s.description = "TODO: longer description of your gem"
-  s.email = "dirk@economysizegeek.com"
+  s.description = "This gem gives you a command line tool to keep your code in sync with plunks you publish at http://plnkr.co"
+  s.email = "code@r26d.com"
   s.executables = ["plunk_it"]
   s.extra_rdoc_files = [
     "LICENSE.txt",
@@ -29,6 +29,7 @@ Gem::Specification.new do |s|
     "_rvmrc",
     "bin/plunk_it",
     "lib/plunk_it.rb",
+    "plunk_it.gemspec",
     "sample/example.js",
     "sample/index.html",
     "sample/manifest.yml",
@@ -39,7 +40,7 @@ Gem::Specification.new do |s|
   s.licenses = ["MIT"]
   s.require_paths = ["lib"]
   s.rubygems_version = "1.8.24"
-  s.summary = "TODO: one-line summary of your gem"
+  s.summary = "Makes it easy to push code to http://plnkr.co"
 
   if s.respond_to? :specification_version then
     s.specification_version = 3
