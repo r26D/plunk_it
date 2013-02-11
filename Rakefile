@@ -15,7 +15,7 @@ require 'jeweler'
 Jeweler::Tasks.new do |gem|
   # gem is a Gem::Specification... see http://docs.rubygems.org/read/chapter/20 for more options
   gem.name = "plunk_it"
-  gem.homepage = "http://github.com/delmendo/plunk_it"
+  gem.homepage = "https://github.com/r26D/plunk_it"
   gem.license = "MIT"
   gem.summary = %Q{Makes it easy to push code to http://plnkr.co}
   gem.description = %Q{This gem gives you a command line tool to keep your code in sync with plunks you publish at http://plnkr.co}
