@@ -17,9 +17,9 @@ Jeweler::Tasks.new do |gem|
   gem.name = "plunk_it"
   gem.homepage = "http://github.com/delmendo/plunk_it"
   gem.license = "MIT"
-  gem.summary = %Q{TODO: one-line summary of your gem}
-  gem.description = %Q{TODO: longer description of your gem}
-  gem.email = "dirk@economysizegeek.com"
+  gem.summary = %Q{Makes it easy to push code to http://plnkr.co}
+  gem.description = %Q{This gem gives you a command line tool to keep your code in sync with plunks you publish at http://plnkr.co}
+  gem.email = "code@r26d.com"
   gem.authors = ["Dirk Elmendorf"]
   # dependencies defined in Gemfile
 end
