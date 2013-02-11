@@ -7,6 +7,7 @@ require 'logger'
 #TODO - allow you to configure what gets excluded from uploading
 #TODO - add support for pulling down a plunk to keep the local file in sync
 #TODO - build as a gem
+#TODO - add support for storing the key for the plunk in the directory so if you re-plunk_it it will override the plunk instead of creating a new one
 
 VALID_EXTENSTIONS = [".js", ".html"]
 if !File.exists?(File.expand_path("~/.plunk_it"))
@@ -41,7 +42,8 @@ Dir["**/*"].select{|x| !File.directory?(x) &&
                         :content => file.read}
 
 end
-exit
+
+
 @agent = Mechanize.new do|a|
 #a.log = Logger.new('log.txt')
 #   a.log.level = Logger::DEBUG
@@ -55,8 +57,11 @@ login_post = @agent.post(plnkr_session["user_url"], MultiJson.dump({"service" =>
                      "Origin" => "http://www.plnkr.co",
                      "Referer" => "http://www.plnkr.co/"})
 
-plunk_post = @agent.get("http://api.plnkr.co/plunks?sessid=#{plnkr_session["id"]}")
-plunk_post = @agent.post("http://api.plnkr.co/plunks?sessid=#{plnkr_session["id"]}", MultiJson.dump(payload),
+#figure out if they have plunked it before
+post_url = "http://api.plnkr.co/plunks?sessid=#{plnkr_session["id"]}"
+
+plunk_post = @agent.get(post_url)
+plunk_post = @agent.post(post_url, MultiJson.dump(payload),
                     {"Content-type" => "application/json;charset=UTF-8",
                       "Host" => "api.plnkr.co",
                       "Origin" => "http://plnkr.co",
@@ -65,3 +70,5 @@ plunk_post = @agent.post("http://api.plnkr.co/plunks?sessid=#{plnkr_session["id"
                          
 plunk_data =  MultiJson.load(plunk_post.body)
 puts "It has been plunked to http://plnkr.co/edit/#{plunk_data["id"]}"
+
+#Now write out a .plunk_it into the directory to track the id
