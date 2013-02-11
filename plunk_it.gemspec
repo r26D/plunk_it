@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = "plunk_it"
-  s.version = "0.0.1"
+  s.version = "0.0.2"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Dirk Elmendorf"]
@@ -36,7 +36,7 @@ Gem::Specification.new do |s|
     "test/helper.rb",
     "test/test_plunk_it.rb"
   ]
-  s.homepage = "http://github.com/delmendo/plunk_it"
+  s.homepage = "https://github.com/r26D/plunk_it"
   s.licenses = ["MIT"]
   s.require_paths = ["lib"]
   s.rubygems_version = "1.8.24"
