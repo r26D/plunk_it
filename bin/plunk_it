@@ -4,9 +4,15 @@ require 'multi_json'
 require 'nokogiri'
 require 'mechanize'
 require 'logger'
+require 'trollop'
+
 #TODO - allow you to configure what gets excluded from uploading
 #TODO - add support for pulling down a plunk to keep the local file in sync
-#TODO - build as a gem
+#TODO - add command line option to output a plunk file that has the url for the plunk
+#TODO - handle the case where there are no changes to a plunk that already exists
+opts = Trollop::options do
+  opt :plunk_txt, "Output a plunk.txt with url"
+end
 
 VALID_EXTENSTIONS = [".js", ".html"]
 if !File.exists?(File.expand_path("~/.plunk_it"))
@@ -137,4 +143,12 @@ manifest["plnkr_id"]  = plunk_data["id"]
 File.open(manifest_filename, "wb") do |f|
   f.write(YAML.dump(manifest))
 end
-puts "It has been plunked to http://plnkr.co/edit/#{plunk_data["id"]}"
+plunk_url = "http://plnkr.co/edit/#{plunk_data["id"]}"
+if opts[:plunk_txt]
+  plunk_txt_filename = File.expand_path([target_directory, "plunk.txt"].join(File::SEPARATOR))
+  File.open(plunk_txt_filename, "wb") do |f|
+    f.write(plunk_url)
+  end
+  puts "Wrote #{plunk_txt_filename}"
+end
+puts "It has been plunked to #{plunk_url}"

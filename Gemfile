@@ -2,6 +2,7 @@ source 'http://rubygems.org'
 
 gem 'multi_json'
 gem 'mechanize'
+gem 'trollop'
 group :development do
 # gem "shoulda", ">= 0"
   gem "rdoc", "~> 3.12"
