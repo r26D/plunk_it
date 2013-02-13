@@ -8,8 +8,6 @@ require 'trollop'
 
 #TODO - allow you to configure what gets excluded from uploading
 #TODO - add support for pulling down a plunk to keep the local file in sync
-#TODO - add command line option to output a plunk file that has the url for the plunk
-#TODO - handle the case where there are no changes to a plunk that already exists
 opts = Trollop::options do
   opt :plunk_txt, "Output a plunk.txt with url"
 end
@@ -122,7 +120,6 @@ if manifest["plnkr_id"]
     payload["files"] = new_files
   end
 
-#pp payload
 # pp MultiJson.dump(payload)
 #  abort("oops")
 else
@@ -131,24 +128,28 @@ else
   current_data_page = @agent.get(post_url)
 end
 
-plunk_post = @agent.post(post_url, MultiJson.dump(payload),
-                    {"Content-type" => "application/json;charset=UTF-8",
-                      "Host" => "api.plnkr.co",
-                      "Origin" => "http://plnkr.co",
-                      "Referer" => referer })
+if !payload.empty?
+  plunk_post = @agent.post(post_url, MultiJson.dump(payload),
+                      {"Content-type" => "application/json;charset=UTF-8",
+                        "Host" => "api.plnkr.co",
+                        "Origin" => "http://plnkr.co",
+                        "Referer" => referer })
 
-                         
-plunk_data =  MultiJson.load(plunk_post.body)
-manifest["plnkr_id"]  = plunk_data["id"]
-File.open(manifest_filename, "wb") do |f|
-  f.write(YAML.dump(manifest))
-end
-plunk_url = "http://plnkr.co/edit/#{plunk_data["id"]}"
-if opts[:plunk_txt]
-  plunk_txt_filename = File.expand_path([target_directory, "plunk.txt"].join(File::SEPARATOR))
-  File.open(plunk_txt_filename, "wb") do |f|
-    f.write(plunk_url)
+                           
+  plunk_data =  MultiJson.load(plunk_post.body)
+  manifest["plnkr_id"]  = plunk_data["id"]
+  File.open(manifest_filename, "wb") do |f|
+    f.write(YAML.dump(manifest))
   end
-  puts "Wrote #{plunk_txt_filename}"
+  plunk_url = "http://plnkr.co/edit/#{plunk_data["id"]}"
+  if opts[:plunk_txt]
+    plunk_txt_filename = File.expand_path([target_directory, "plunk.txt"].join(File::SEPARATOR))
+    File.open(plunk_txt_filename, "wb") do |f|
+      f.write(plunk_url)
+    end
+    puts "Wrote #{plunk_txt_filename}"
+  end
+  puts "It has been plunked to #{plunk_url}"
+else
+  puts "No change to plunk"
 end
-puts "It has been plunked to #{plunk_url}"
